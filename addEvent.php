@@ -61,6 +61,6 @@ if(isset($_POST['submit'])){
  
 $_SESSION['status_response'] = array('status' => $status, 'status_msg' => $statusMsg); 
  
-header("Location: index.php"); 
+header("Location: list.php"); 
 exit(); 
 ?>

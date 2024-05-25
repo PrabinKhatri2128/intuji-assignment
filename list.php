@@ -1,10 +1,21 @@
 <?php
-
 // Include Calendar Events handler Class
 include_once 'classes/CalendarEvents.php';
 
 // Include database configuration file 
 require_once 'include/dbConfig.php'; 
+
+$status = $statusMsg = $access_token = ''; 
+if(!empty($_SESSION['status_response'])){ 
+    $status_response = $_SESSION['status_response']; 
+    $status = $status_response['status']; 
+    $statusMsg = $status_response['status_msg'];
+    unset($_SESSION['status_response']);
+}
+
+if(!empty($_SESSION['google_access_token'])){ 
+    $access_token = $_SESSION['google_access_token'];
+}
 
 $CalendarEvents = new CalendarEvents($db);
 
@@ -16,16 +27,35 @@ $dataset = array(
             "totaldisplayrecords" => count($data),
             "data" => $data
         );
-        
-//echo '<pre>';
-//print_r($dataset);
+
+//print_r($_SESSION);
 
 ?>
 <div class="bootstrap-wrapper">
 <div class="col-md-12">
 <span class="align-middle"><h1>Calendar Events List</h1></span>
+
+<!-- Status message -->
+
+<?php if(!empty($statusMsg)){ ?>
+    <div id="msg-container"><?php echo $statusMsg; ?></div>
+<?php }  else { ?>
+    <div id="msg-container"></div>
+<?php } ?>
+    
+<?php if(!empty($access_token)){ ?>
+<div class="right_col" role="main">
+    <div class="page-title">
+        <div class="title_left">
+            <button type="button" class="btn btn-primary" id="logout">Disconnect Calendar</button>
+            <button type="button" class="btn btn-primary" data-title="Add Event" data-toggle="modal" data-target="#addModal">Add Event</button>
+        </div>
+    </div>
+</div>
+<?php } ?>
+
 <table id="myTable" class="display nowrap" style="width:100%">
-        <thead>
+        <thead> 
             <tr>
                 <th>Title</th>
                 <th>Description</th>
@@ -40,22 +70,82 @@ $dataset = array(
 </div>
 </div>
 
-<div class="modal fade" id="info_container" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content" id="form_container" >
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addmodalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="addModalLabel">Add Calendar Event</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+        <form method="post" action="addEvent.php" class="form">
+            <div class="form-group">
+                <label>Event Title</label>
+                <input type="text" class="form-control" name="title" value="<?php echo !empty($postData['title'])?$postData['title']:''; ?>" required="">
+            </div>
+            <div class="form-group">
+                <label>Event Description</label>
+                <textarea name="description" class="form-control"><?php echo !empty($postData['description'])?$postData['description']:''; ?></textarea>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" class="form-control" value="<?php echo !empty($postData['location'])?$postData['location']:''; ?>">
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="date" class="form-control" value="<?php echo !empty($postData['date'])?$postData['date']:''; ?>" required="">
+            </div>
+            <div class="form-group time">
+                <label>Time</label>
+                <input type="time" name="time_from" class="form-control" value="<?php echo !empty($postData['time_from'])?$postData['time_from']:''; ?>">
+                <span>TO</span>
+                <input type="time" name="time_to" class="form-control" value="<?php echo !empty($postData['time_to'])?$postData['time_to']:''; ?>">
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <input type="submit" class="btn btn-primary" name="submit" value="Add Event"/>
+            </div>
+            </form>       
+        </div>
+        </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="myModalLabel">Delete Calendar Event</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            Are you sure want to delete this Calendar Event. ?
+        </div>
+        <div class="modal-footer">
+        </div>
         </div>
     </div>
 </div>
+
 <link rel="stylesheet" href="css/bootstrap.min.css" />
-<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script> 
 <script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script>
+<script src="js/bootstrap.js"></script> 
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css" />
 <link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css" rel="stylesheet"> 
 <script src="https://cdn.datatables.net/2.0.7/js/dataTables.js"></script>
 <script type="text/javascript">
     new DataTable('#myTable', {
-    ajax: 'ajax.php',
+    ajax: 'ajax.php?action=listevent',
     processing: true,
     serverSide: true,
     columns: [
@@ -65,87 +155,76 @@ $dataset = array(
         { data: 'date' },
         { data: 'time_from' },
         { data: 'time_to' },
-        { data: 'action' }
+        { data: 'id' }
     ],
     "columnDefs": [
         {      
             "targets":6,
-            "data" : "action",
-            "render": function (data, type, row, meta) {                
-                var action = '<a data="'+data+'" class="remove_event btn btn-xs btn-success" title="Remove" href="javascript:void(0)" ><i class="fa fa-remove"></i></a>';
+            "render": function (data, type, row) {                
+                var action = '<a data-id="'+data+'" class="remove_event btn btn-xs btn-success" data-title="Delete Event" data-toggle="modal" data-target="#myModal"><i class="fa fa-remove"></i></a>';
                 return action;
             }
         },
-        {"orderable": false, "targets": [6]}
+        {"orderable": false, "targets": [4, 5, 6]}
     ]
 });
 
-$(document).ready(function(){
-    var $element = $("<div class='event_confirm'><i class='fa fa-lg fa-info-circle'></i> <span id='delete'></span></div>");
-    $("#myTable").next().append($element);
-
-    $(".event_confirm").dialog({
-        modal: true,
-        bgiframe: true,
-        minWidth: 500,
-        height: "auto",
-        autoOpen: false,
-        classes: {
-            "ui-dialog": "ui-corner-all info_open",
-            "ui-dialog-titlebar": "ui-corner-all alert-info",
-            "ui-button":"btn-primary",
-        },
-    });
+$("#myModal").on('show.bs.modal', function (e) {
+    var triggerLink = $(e.relatedTarget);
+    var id = triggerLink.data("id");
+    var title = triggerLink.data("title");
+  
+    $("#modalTitle").text(title);
+    $(this).find(".modal-footer").html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button><button type="button" class="btn btn-primary delete_event" data="'+id+'">Confirm Delete</button>');
 });
 
+
 //Delete event
-$(document).on('click',".remove_event",function(e) {
+$(document).on('click',".delete_event",function(e) {
         e.preventDefault();
-        var id = $(this).attr('data');
-        $("#delete").text("Are you sure want to delete this Calendar Event. ?");
-        $(".event_confirm").dialog('option','title','Confirm Delete');
-        $(".event_confirm").dialog('option', 'buttons', {
-            "Confirm": function() {
+            let id = $(this).attr('data');
                 $.ajax({
                     type:"post",
-                    url:"ajax.php?action=delete",
-                    data: {id:id},
+                    url:"ajax.php",
+                    data: {id:id, action:'deleteevent'},
                     async:false,
                     success:function (data) {
+                        $('#myModal').modal('toggle');
                         data = $.parseJSON(data);
-                        var $msg = '';
+                        let $msg = '';
                         if( data.status ) {
                             $msg = $('<div class="auto-dismissible alert alert-success alert-dismissible" role="alert">'+
                                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
                                 '<strong>Success!</strong> '+data.msg+
                                 '</div>');
-                        } else {
-                            $msg = $('<div class="auto-dismissible alert alert-danger alert-dismissible" role="alert">'+
-                                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                                '<strong>Error!</strong> '+data.msg+
-                                '</div>');
-                        }
-                        $("#msg-container").html($msg);
+                                $("#msg-container").html($msg);
+                        } 
                     },
                     error:function (err) {
-                        var $msg = $('<div class="auto-dismissible alert alert-danger alert-dismissible" role="alert">'+
+                        $('#myModal').modal('toggle');
+                        let $msg = $('<div class="auto-dismissible alert alert-danger alert-dismissible" role="alert">'+
                             '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
                             '<strong>Error!</strong> '+err.responseText+
                             '</div>');
                         $("#msg-container").html($msg);
                     }
-                });
-                table.ajax.reload();
-                $(this).dialog("close");
-            },
-            "Cancel": function() {
-                $(this).dialog("close");
-            }
-        });
-        $(".info_confirm").dialog("open");
-        $(".info_open").position({
-            of: $(window)
-        });
+                });            
 
+    });
+
+    
+    $(document).on('click',"#logout",function(e) {
+        $.ajax({
+                    type:"post",
+                    url:"ajax.php",
+                    data: {action:'logout'},
+                    async:false,
+                    success:function (data) {
+                        data = $.parseJSON(data);
+                        if( data.status ) {
+                            window.location.replace("http://localhost/googlecalendar/");
+                        } 
+                    }
+                });
     });
 </script>

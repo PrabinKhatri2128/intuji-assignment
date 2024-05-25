@@ -6,10 +6,10 @@ define('DB_USERNAME', 'root');
 define('DB_PASSWORD', ''); 
 define('DB_NAME', 'google_calendar'); 
  
+// Google API configuration 
 
-define('REDIRECT_URI', 'http://localhost/googlecalendar/google_calendar_event_sync.php'); 
- 
 // Start session 
 if(!session_id()) session_start(); 
-
+ 
+// Google OAuth URL
 ?>

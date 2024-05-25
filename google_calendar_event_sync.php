@@ -13,7 +13,7 @@ if(isset($_GET['code'])){
      
     // Get event ID from session 
     $event_id = $_SESSION['last_event_id']; 
- 
+    $redirect = 'list.php';
     if(!empty($event_id)){ 
          
         // Fetch event details from database 
@@ -84,11 +84,21 @@ if(isset($_GET['code'])){
             $statusMsg = 'Event data not found!'; 
         } 
     }else{ 
-        $statusMsg = 'Event reference not found!'; 
+        // Get the access token 
+        $access_token_sess = $_SESSION['google_access_token']; 
+        if(!empty($access_token_sess)){ 
+            $access_token = $access_token_sess; 
+        }else{ 
+            $data = $GoogleCalendarApi->GetAccessToken(GOOGLE_CLIENT_ID, REDIRECT_URI, GOOGLE_CLIENT_SECRET, $_GET['code']); 
+            $access_token = $data['access_token']; 
+            $_SESSION['google_access_token'] = $access_token; 
+        }
+        $status = 'success';
+        $statusMsg = 'Sucessfully Authentication to Google Account and Calendar!';
     } 
      
     $_SESSION['status_response'] = array('status' => $status, 'status_msg' => $statusMsg); 
-    header("Location: index.php"); 
+    header("Location:".$redirect); 
     exit(); 
 } 
 ?>
