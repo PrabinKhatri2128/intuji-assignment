@@ -1,11 +1,32 @@
 <?php
+
+// Include Google calendar api handler class 
+include_once 'classes/GoogleCalendarApi.php'; 
+
 // Include Calendar Events handler Class
 include_once 'classes/CalendarEvents.php';
 
 // Include database configuration file 
-require_once 'include/dbConfig.php'; 
+require_once 'include/dbConfig.php';
+
+// Initialize Google Calendar API class 
+$GoogleCalendarApi = new GoogleCalendarApi(); 
+$CalendarEvents = new CalendarEvents($db);
+
+$redirect_host = 'http://' . $_SERVER['HTTP_HOST'];
+$path = explode("/",$_SERVER['REQUEST_URI']);
+$projectFolderName = '/'.$path[1];
+$base_url =  $redirect_host . $projectFolderName;
 
 $status = $statusMsg = $access_token = ''; 
+if(!empty($_SESSION['google_access_token'])){ 
+    $access_token = $_SESSION['google_access_token'];
+    $getUserInfo =  $GoogleCalendarApi->GetUserInfo($access_token);
+}
+else {
+    header("Location:".$base_url);
+}
+
 if(!empty($_SESSION['status_response'])){ 
     $status_response = $_SESSION['status_response']; 
     $status = $status_response['status']; 
@@ -13,24 +34,13 @@ if(!empty($_SESSION['status_response'])){
     unset($_SESSION['status_response']);
 }
 
-if(!empty($_SESSION['google_access_token'])){ 
-    $access_token = $_SESSION['google_access_token'];
-}
-
-$CalendarEvents = new CalendarEvents($db);
-
-$data  = $CalendarEvents->GetCalendarEvent();
-
-$dataset = array(
-            "echo" => 1,
-            "totalrecords" => count($data),
-            "totaldisplayrecords" => count($data),
-            "data" => $data
-        );
-
-//print_r($_SESSION);
-
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Google Calendar Integration</title>
+</head>
+<body>
 <div class="bootstrap-wrapper">
 <div class="col-md-12">
 <span class="align-middle"><h1>Calendar Events List</h1></span>
@@ -47,7 +57,7 @@ $dataset = array(
 <div class="right_col" role="main">
     <div class="page-title">
         <div class="title_left">
-            <button type="button" class="btn btn-primary" id="logout">Disconnect Calendar</button>
+            <button type="button" class="btn btn-primary" id="logout">Disconnect Google Account</button>
             <button type="button" class="btn btn-primary" data-title="Add Event" data-toggle="modal" data-target="#addModal">Add Event</button>
         </div>
     </div>
@@ -127,7 +137,7 @@ $dataset = array(
             </button>
         </div>
         <div class="modal-body">
-            Are you sure want to delete this Calendar Event. ?
+            Are you sure want to delete this Calendar Event.?
         </div>
         <div class="modal-footer">
         </div>
@@ -144,7 +154,7 @@ $dataset = array(
 <link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.css" rel="stylesheet"> 
 <script src="https://cdn.datatables.net/2.0.7/js/dataTables.js"></script>
 <script type="text/javascript">
-    new DataTable('#myTable', {
+   let table = new DataTable('#myTable', {
     ajax: 'ajax.php?action=listevent',
     processing: true,
     serverSide: true,
@@ -166,7 +176,9 @@ $dataset = array(
             }
         },
         {"orderable": false, "targets": [4, 5, 6]}
-    ]
+    ],
+    paging: true,
+    pagingType: 'simple_numbers',
 });
 
 $("#myModal").on('show.bs.modal', function (e) {
@@ -190,21 +202,25 @@ $(document).on('click',".delete_event",function(e) {
                     async:false,
                     success:function (data) {
                         $('#myModal').modal('toggle');
+                        table.ajax.reload();
                         data = $.parseJSON(data);
                         let $msg = '';
+                        console.log(data);
                         if( data.status ) {
                             $msg = $('<div class="auto-dismissible alert alert-success alert-dismissible" role="alert">'+
                                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                                '<strong>Success!</strong> '+data.msg+
+                                '<strong>Success! </strong> '+data.msg+
                                 '</div>');
-                                $("#msg-container").html($msg);
+                                console.log($msg);
+                                console.log($("#msg-container"));
+                            $("#msg-container").html($msg);
                         } 
                     },
                     error:function (err) {
                         $('#myModal').modal('toggle');
                         let $msg = $('<div class="auto-dismissible alert alert-danger alert-dismissible" role="alert">'+
                             '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                            '<strong>Error!</strong> '+err.responseText+
+                            '<strong>Error! </strong> '+err.responseText+
                             '</div>');
                         $("#msg-container").html($msg);
                     }
@@ -214,17 +230,23 @@ $(document).on('click',".delete_event",function(e) {
 
     
     $(document).on('click',"#logout",function(e) {
+        let baseUrl = window.location.href;
+        let path = baseUrl.split("/");        
         $.ajax({
-                    type:"post",
-                    url:"ajax.php",
-                    data: {action:'logout'},
-                    async:false,
-                    success:function (data) {
-                        data = $.parseJSON(data);
-                        if( data.status ) {
-                            window.location.replace("http://localhost/googlecalendar/");
-                        } 
-                    }
-                });
+                type:"post",
+                url:"ajax.php",
+                data: {action:'logout'},
+                async:false,
+                success:function (data) {
+                    data = $.parseJSON(data);
+                    if( data.status ) {
+                        window.location.replace("http://localhost/"+path[3]);
+                    } 
+                }
+            });
     });
+
+
 </script>
+</body>
+</html>

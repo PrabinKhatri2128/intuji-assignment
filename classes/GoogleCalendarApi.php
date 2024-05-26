@@ -12,6 +12,7 @@ class GoogleCalendarApi {
     const CALENDAR_TIMEZONE_URI = 'https://www.googleapis.com/calendar/v3/users/me/settings/timezone'; 
     const CALENDAR_LIST = 'https://www.googleapis.com/calendar/v3/users/me/calendarList'; 
     const CALENDAR_EVENT = 'https://www.googleapis.com/calendar/v3/calendars/'; 
+    const GOOGLE_USER = 'https://www.googleapis.com/oauth2/v1/userinfo/';
      
     function __construct($params = array()) { 
         if (count($params) > 0){ 
@@ -172,7 +173,7 @@ class GoogleCalendarApi {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer '. $access_token, 'Content-Type: application/json'));       
         $data = json_decode(curl_exec($ch), true); 
-        $http_code = curl_getinfo($ch,CURLINFO_HTTP_CODE);   
+        //$http_code = curl_getinfo($ch,CURLINFO_HTTP_CODE);   
         // print_r($data);
         // if ($http_code != 410) { 
         //     $error_msg = 'Failed to delete event'; 
@@ -180,12 +181,28 @@ class GoogleCalendarApi {
         //         $error_msg = curl_error($ch); 
         //     } 
         //     throw new Exception('Error '.$http_code.': '.$error_msg); 
-        // } 
+        // }
 
-        echo '<pre>';
-        print_r($data['error']);    
- 
-        return $data['error']['code'];
-    } 
+        //If successful, this method returns an empty response body        
+        return true;
+    }
+
+    public function GetUserInfo($access_token) {
+        $data = ['access_token' => $access_token ];
+        $apiURL = self::GOOGLE_USER.'?'.http_build_query($data); 
+
+        $ch = curl_init();         
+        curl_setopt($ch, CURLOPT_URL, $apiURL);         
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);         
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer '. $access_token, 'Content-Type: application/json'));       
+        $data = json_decode(curl_exec($ch), true);
+        // echo '<pre>';
+        // print_r($ch);
+        // print_r($data);
+        return $data;
+        
+    }
 } 
 ?>

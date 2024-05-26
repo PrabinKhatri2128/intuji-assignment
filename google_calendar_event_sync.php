@@ -66,11 +66,12 @@ if(isset($_GET['code'])){
                         $update = $stmt->execute(); 
                          
                         unset($_SESSION['last_event_id']); 
-                        unset($_SESSION['google_access_token']); 
+                        //unset($_SESSION['google_access_token']); 
                          
                         $status = 'success'; 
-                        $statusMsg = '<p>Event #'.$event_id.' has been added to Google Calendar successfully!</p>'; 
-                        $statusMsg .= '<p><a href="https://calendar.google.com/calendar/" target="_blank">Open Calendar</a>'; 
+                        $statusMsg = '<div class="auto-dismissible alert alert-success alert-dismissible" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <strong>Success! Event #'.$event_id.' has been added to Google Calendar successfully!</div>';  
                     } 
                 } catch(Exception $e) { 
                     //header('Bad Request', true, 400); 
@@ -94,7 +95,9 @@ if(isset($_GET['code'])){
             $_SESSION['google_access_token'] = $access_token; 
         }
         $status = 'success';
-        $statusMsg = 'Sucessfully Authentication to Google Account and Calendar!';
+        $statusMsg = '<div class="auto-dismissible alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>Success! </strong>Sucessfully authenticated to Google Account and Calendar!</div>';
     } 
      
     $_SESSION['status_response'] = array('status' => $status, 'status_msg' => $statusMsg); 

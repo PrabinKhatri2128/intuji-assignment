@@ -17,26 +17,36 @@ if(!empty($_SESSION['status_response'])){
     unset($_SESSION['status_response']);
 }
 
-//echo '<pre>';
-//print_r($_SESSION);
 ?>
-<div class="bootstrap-wrapper">
-<div class="col-md-6">
-<span class="align-middle"><h1>Google Calendar Event</h1></span>
-<!-- Status message -->
-<?php if(!empty($statusMsg)){ ?>
-    <div id="msg-container"><?php echo $statusMsg; ?></div>
-<?php } ?>
 
-    <div class="right_col" role="main">
-        <div class="page-title">
-            <div class="title_left">
-                <button type="button" class="btn btn-primary" onClick="window.open('<?php echo $googleOauthURL; ?>')">Authorization</button>
-            </div>
-        </div>
+<section class="vh-100">
+  <div class="container py-5 h-100">
+    <div class="row d-flex align-items-center justify-content-center h-100">
+      <div class="col-md-8 col-lg-7 col-xl-6">
+        <img src="images/draw2.svg"
+          class="img-fluid" alt="Phone image">
+      </div>
+      <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1">
+      <div class="divider d-flex align-items-center my-4">
+            <p class="text-center fw-bold mx-3 mb-0 text-muted"><h4>Welcome to Google Calendar Plugin</h4></p>
+          </div>
+        
+          <!-- Submit button -->
+          <a href="<?php echo $googleOauthURL.'&prompt=select_account+consent';?>"><button type="button" class="btn btn-primary btn-lg btn-block">Sign in with Google</button></a>
+
+      </div>
     </div>
-</div>
-
+  </div>
+</section>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="css/bootstrap.css" />
+<style>
+    .divider:after,
+    .divider:before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #eee;
+    }
+</style>
